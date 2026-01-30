@@ -1,0 +1,29 @@
+{
+  "best_model":"Logistic Regression",
+  "features":[
+    "NBR",
+    "NDMI",
+    "NDVI",
+    "aspect",
+    "elevation",
+    "landcover",
+    "rain",
+    "slope",
+    "temperature",
+    "latitude",
+    "longitude"
+  ],
+  "performance_metrics":{
+    "Accuracy":1.0,
+    "Precision":1.0,
+    "Recall":1.0,
+    "F1-Score":1.0,
+    "ROC-AUC":1.0
+  },
+  "training_samples":247339,
+  "test_samples":61835,
+  "class_distribution":{
+    "0":154587,
+    "1":154587
+  }
+}

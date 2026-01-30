@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildfire Dashboard - Simple Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #e94560;
+        }
+
+        .status {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .success {
+            color: #00ff00;
+        }
+
+        .error {
+            color: #ff0000;
+        }
+
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #ff6b6b;
+        }
+
+        #result {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .link {
+            color: #4a9eff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔥 Wildfire Dashboard - Test Page</h1>
+
+        <div class="status" id="status">
+            <h3>Testing Flask Server...</h3>
+            <p>Click buttons below to test endpoints:</p>
+        </div>
+
+        <div>
+            <button onclick="testStats()">Test Statistics API</button>
+            <button onclick="testAssessments()">Test Assessments API</button>
+            <button onclick="testPrediction()">Test Prediction API</button>
+            <button onclick="openDashboard()">Open Full Dashboard</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testStats() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>Loading...</p>';
+
+            try {
+                const response = await fetch('http://localhost:5000/api/stats');
+                const data = await response.json();
+
+                result.innerHTML = `
+                    <h3 class="success">✅ Statistics API Working!</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                result.innerHTML = `
+                    <h3 class="error">❌ Error</h3>
+                    <p>${error.message}</p>
+                    <p>Make sure Flask server is running: python app.py</p>
+                `;
+            }
+        }
+
+        async function testAssessments() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>Loading...</p>';
+
+            try {
+                const response = await fetch('http://localhost:5000/api/assessments');
+                const data = await response.json();
+
+                result.innerHTML = `
+                    <h3 class="success">✅ Assessments API Working!</h3>
+                    <p>Found ${data.length} locations</p>
+                    <pre>${JSON.stringify(data.slice(0, 2), null, 2)}</pre>
+                    <p>...and ${data.length - 2} more</p>
+                `;
+            } catch (error) {
+                result.innerHTML = `
+                    <h3 class="error">❌ Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function testPrediction() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>Testing prediction...</p>';
+
+            const testData = {
+                latitude: -37.10,
+                longitude: 149.80,
+                elevation: 350,
+                aspect: 140,
+                slope: 14.5,
+                landcover: 10,
+                temperature: 35.0,
+                rain: 10.5,
+                NDVI: 0.25,
+                NBR: 0.20,
+                NDMI: 0.15
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testData)
+                });
+                const data = await response.json();
+
+                result.innerHTML = `
+                    <h3 class="success">✅ Prediction API Working!</h3>
+                    <h2 style="color: #ff6600">${data.risk_level} RISK</h2>
+                    <p><strong>Fire Probability:</strong> ${(data.fire_probability * 100).toFixed(1)}%</p>
+                    <p><strong>Response Time:</strong> ${data.response_time}</p>
+                    <p><strong>Recommendations:</strong></p>
+                    <ul>
+                        ${data.recommendations.map(r => `<li>${r}</li>`).join('')}
+                    </ul>
+                `;
+            } catch (error) {
+                result.innerHTML = `
+                    <h3 class="error">❌ Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        function openDashboard() {
+            window.open('http://localhost:5000', '_blank');
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', testStats);
+    </script>
+</body>
+
+</html>

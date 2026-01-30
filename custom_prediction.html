@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildfire Risk Predictor - Custom Location</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 14px;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #e94560;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            color: #a0a0a0;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #e94560;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+        }
+
+        .predict-btn {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.5);
+        }
+
+        .result-container {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid;
+            display: none;
+        }
+
+        .result-container.extreme {
+            border-color: #8B0000;
+        }
+
+        .result-container.critical {
+            border-color: #FF0000;
+        }
+
+        .result-container.high {
+            border-color: #FF6600;
+        }
+
+        .result-container.moderate {
+            border-color: #FFA500;
+        }
+
+        .result-container.low {
+            border-color: #00AA00;
+        }
+
+        .result-header {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #a0a0a0;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .recommendations {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .recommendations h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #e94560;
+        }
+
+        .recommendation-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .recommendation-item:last-child {
+            border-bottom: none;
+        }
+
+        .quick-fill {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quick-fill h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #a0a0a0;
+        }
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Wildfire Risk Predictor</h1>
+            <p>Enter custom location and environmental data for accurate predictions</p>
+        </div>
+
+        <div class="form-container">
+            <div class="quick-fill">
+                <h3>Quick Fill Examples:</h3>
+                <button class="quick-btn" onclick="fillExample('high')">High Risk Area</button>
+                <button class="quick-btn" onclick="fillExample('moderate')">Moderate Risk</button>
+                <button class="quick-btn" onclick="fillExample('low')">Low Risk Area</button>
+            </div>
+
+            <form id="prediction-form">
+                <div class="form-section">
+                    <h2>🌍 Geographic Data</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Latitude</label>
+                            <input type="number" step="0.0001" id="latitude" placeholder="-37.11" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude</label>
+                            <input type="number" step="0.0001" id="longitude" placeholder="149.79" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Elevation (meters)</label>
+                            <input type="number" id="elevation" placeholder="350" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>🏞️ Terrain Data</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Aspect (0-360°)</label>
+                            <input type="number" step="0.1" id="aspect" placeholder="140" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Slope (degrees)</label>
+                            <input type="number" step="0.1" id="slope" placeholder="14.5" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Landcover Type (1-20)</label>
+                            <input type="number" id="landcover" placeholder="10" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>🌡️ Environmental Data</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Temperature (°C)</label>
+                            <input type="number" step="0.1" id="temperature" placeholder="25.5" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Rainfall (mm)</label>
+                            <input type="number" step="0.1" id="rain" placeholder="40.3" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>🌿 Vegetation Indices</h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>NDVI (-1 to 1)</label>
+                            <input type="number" step="0.01" id="NDVI" placeholder="0.73" required>
+                        </div>
+                        <div class="form-group">
+                            <label>NBR (-1 to 1)</label>
+                            <input type="number" step="0.01" id="NBR" placeholder="0.54" required>
+                        </div>
+                        <div class="form-group">
+                            <label>NDMI (-1 to 1)</label>
+                            <input type="number" step="0.01" id="NDMI" placeholder="0.24" required>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="predict-btn">🔥 Get Prediction</button>
+            </form>
+        </div>
+
+        <div id="result" class="result-container">
+            <div class="result-header" id="result-header"></div>
+
+            <div class="result-stats">
+                <div class="stat">
+                    <div class="stat-label">Fire Probability</div>
+                    <div class="stat-value" id="probability"></div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Response Time</div>
+                    <div class="stat-value" id="response-time"></div>
+                </div>
+            </div>
+
+            <div class="recommendations" id="recommendations">
+                <h3>⚠️ Recommended Actions</h3>
+                <div id="recommendation-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const examples = {
+            high: {
+                latitude: -37.10,
+                longitude: 149.80,
+                elevation: 350,
+                aspect: 140,
+                slope: 14.5,
+                landcover: 10,
+                temperature: 35.0,
+                rain: 10.5,
+                NDVI: 0.25,
+                NBR: 0.20,
+                NDMI: 0.15
+            },
+            moderate: {
+                latitude: -37.12,
+                longitude: 149.75,
+                elevation: 340,
+                aspect: 150,
+                slope: 12.0,
+                landcover: 12,
+                temperature: 22.0,
+                rain: 35.0,
+                NDVI: 0.55,
+                NBR: 0.45,
+                NDMI: 0.35
+            },
+            low: {
+                latitude: -37.08,
+                longitude: 149.85,
+                elevation: 330,
+                aspect: 130,
+                slope: 10.0,
+                landcover: 8,
+                temperature: 18.0,
+                rain: 50.0,
+                NDVI: 0.75,
+                NBR: 0.65,
+                NDMI: 0.55
+            }
+        };
+
+        function fillExample(type) {
+            const data = examples[type];
+            for (const key in data) {
+                document.getElementById(key).value = data[key];
+            }
+        }
+
+        const recommendations = {
+            EXTREME: [
+                'IMMEDIATE EVACUATION of all residents in affected areas',
+                'DEPLOY all available firefighting resources',
+                'ACTIVATE emergency response teams and incident command',
+                'ESTABLISH emergency shelters and medical facilities',
+                'REQUEST mutual aid from neighboring jurisdictions'
+            ],
+            CRITICAL: [
+                'ALERT firefighting teams to standby positions',
+                'PREPARE evacuation routes and emergency procedures',
+                'MONITOR weather conditions continuously',
+                'NOTIFY emergency services and hospitals',
+                'POSITION resources at strategic locations'
+            ],
+            HIGH: [
+                'INCREASE surveillance and monitoring frequency',
+                'PREPARE firefighting equipment and personnel',
+                'NOTIFY local authorities',
+                'REVIEW evacuation plans',
+                'ASSESS available resources'
+            ],
+            MODERATE: [
+                'Maintain enhanced monitoring',
+                'Brief emergency personnel on situation',
+                'Check equipment readiness'
+            ],
+            LOW: [
+                'Continue routine surveillance',
+                'Maintain standard protocols'
+            ]
+        };
+
+        const responseTimes = {
+            EXTREME: '0-5 min',
+            CRITICAL: '5-15 min',
+            HIGH: '15-30 min',
+            MODERATE: '30-60 min',
+            LOW: 'Routine'
+        };
+
+        document.getElementById('prediction-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const data = {
+                NBR: parseFloat(document.getElementById('NBR').value),
+                NDMI: parseFloat(document.getElementById('NDMI').value),
+                NDVI: parseFloat(document.getElementById('NDVI').value),
+                aspect: parseFloat(document.getElementById('aspect').value),
+                elevation: parseInt(document.getElementById('elevation').value),
+                landcover: parseInt(document.getElementById('landcover').value),
+                rain: parseFloat(document.getElementById('rain').value),
+                slope: parseFloat(document.getElementById('slope').value),
+                temperature: parseFloat(document.getElementById('temperature').value),
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value)
+            };
+
+            // Simple risk assessment (client-side estimation)
+            // In production, this would call the Python backend
+            let riskScore = 0;
+
+            if (data.temperature > 30) riskScore += 0.3;
+            else if (data.temperature > 25) riskScore += 0.2;
+
+            if (data.rain < 20) riskScore += 0.3;
+            else if (data.rain < 35) riskScore += 0.2;
+
+            if (data.NDVI < 0.3) riskScore += 0.3;
+            else if (data.NDVI < 0.5) riskScore += 0.15;
+
+            if (data.NBR < 0.3) riskScore += 0.1;
+
+            const probability = Math.min(riskScore, 1.0);
+
+            let riskLevel;
+            if (probability >= 0.80) riskLevel = 'EXTREME';
+            else if (probability >= 0.60) riskLevel = 'CRITICAL';
+            else if (probability >= 0.40) riskLevel = 'HIGH';
+            else if (probability >= 0.20) riskLevel = 'MODERATE';
+            else riskLevel = 'LOW';
+
+            displayResult(riskLevel, probability);
+        });
+
+        function displayResult(riskLevel, probability) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result-container ' + riskLevel.toLowerCase();
+            resultDiv.style.display = 'block';
+
+            document.getElementById('result-header').textContent =
+                `${riskLevel} RISK DETECTED`;
+
+            document.getElementById('probability').textContent =
+                (probability * 100).toFixed(1) + '%';
+
+            document.getElementById('response-time').textContent =
+                responseTimes[riskLevel];
+
+            const recList = document.getElementById('recommendation-list');
+            recList.innerHTML = recommendations[riskLevel]
+                .map(r => `<div class="recommendation-item">• ${r}</div>`)
+                .join('');
+
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+
+</html>

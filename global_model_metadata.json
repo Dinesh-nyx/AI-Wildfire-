@@ -1,0 +1,77 @@
+{
+  "model_name": "Logistic Regression",
+  "training_date": "2026-01-30T03:47:41.963165",
+  "total_samples": 50000,
+  "training_samples": 40000,
+  "test_samples": 10000,
+  "num_regions": 10,
+  "regions": [
+    "Siberia_Russia",
+    "Southeast_Australia",
+    "California_USA",
+    "Amazon_Brazil",
+    "Canada_Boreal",
+    "South_Africa",
+    "Chile",
+    "Mediterranean_Greece",
+    "Indonesia",
+    "Portugal_Spain"
+  ],
+  "features": [
+    "latitude",
+    "longitude",
+    "elevation",
+    "aspect",
+    "slope",
+    "landcover",
+    "temperature",
+    "rain",
+    "NDVI",
+    "NBR",
+    "NDMI"
+  ],
+  "metrics": {
+    "accuracy": 0.8655,
+    "precision": 0.8566860465116279,
+    "recall": 0.9425875579721733,
+    "f1_score": 0.8975862331531257,
+    "roc_auc": 0.9133187887268075
+  },
+  "all_models": {
+    "Logistic Regression": {
+      "accuracy": 0.8655,
+      "precision": 0.8566860465116279,
+      "recall": 0.9425875579721733,
+      "f1": 0.8975862331531257,
+      "roc_auc": 0.9133187887268075
+    },
+    "Random Forest": {
+      "accuracy": 0.8602,
+      "precision": 0.8611813718196697,
+      "recall": 0.9256356948664641,
+      "f1": 0.8922460305225837,
+      "roc_auc": 0.9239044735441851
+    },
+    "Gradient Boosting": {
+      "accuracy": 0.8619,
+      "precision": 0.8629320619785459,
+      "recall": 0.9262753878138493,
+      "f1": 0.8934824527574239,
+      "roc_auc": 0.9293726361226515
+    },
+    "XGBoost": {
+      "accuracy": 0.8545,
+      "precision": 0.8638155899302397,
+      "recall": 0.9109227570766032,
+      "f1": 0.886743986923017,
+      "roc_auc": 0.9212513568613834
+    },
+    "LightGBM": {
+      "accuracy": 0.862,
+      "precision": 0.8618743502153572,
+      "recall": 0.9280345434191588,
+      "f1": 0.8937317110734637,
+      "roc_auc": 0.9281194346169404
+    }
+  }
+}

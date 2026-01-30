@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Driven Wildfire Detection System</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet Heatmap Plugin -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e2139 0%, #0f1729 100%);
+            padding: 25px 50px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border-bottom: 2px solid #ff6b6b;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff6b6b, transparent);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header h1::before {
+            content: "🔥";
+            font-size: 40px;
+            -webkit-text-fill-color: initial;
+        }
+
+        .region-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .region-selector label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .region-selector select {
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .region-selector select:hover {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .region-selector select:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 25px;
+            padding: 25px;
+            height: calc(100vh - 120px);
+        }
+
+        .map-section {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 107, 107, 0.5), transparent);
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .map-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(255, 107, 107, 0.5);
+        }
+
+        #map {
+            height: calc(100% - 70px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #ff6b6b, #ff8e53);
+            border-radius: 10px;
+        }
+
+        .stats-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .stats-panel h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 107, 107, 0.3);
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.2);
+        }
+
+        .stat-card h4 {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .locations-panel {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(255, 107, 107, 0.05));
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 107, 107, 0.2);
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.15);
+        }
+
+        .locations-panel h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .locations-panel h3::before {
+            content: "📍";
+            font-size: 24px;
+        }
+
+        .location-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .location-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            border-radius: 12px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .location-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .location-item.extreme {
+            border-color: #8B0000;
+            background: linear-gradient(90deg, rgba(139, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
+        }
+
+        .location-item.critical {
+            border-color: #FF0000;
+            background: linear-gradient(90deg, rgba(255, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
+        }
+
+        .location-item.high {
+            border-color: #FF6600;
+            background: linear-gradient(90deg, rgba(255, 102, 0, 0.2), rgba(0, 0, 0, 0.3));
+        }
+
+        .location-item.moderate {
+            border-color: #FFA500;
+            background: linear-gradient(90deg, rgba(255, 165, 0, 0.2), rgba(0, 0, 0, 0.3));
+        }
+
+        .location-item.low {
+            border-color: #00AA00;
+            background: linear-gradient(90deg, rgba(0, 170, 0, 0.2), rgba(0, 0, 0, 0.3));
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .location-id {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ff6b6b;
+        }
+
+        .risk-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .risk-badge.extreme {
+            background: #8B0000;
+        }
+
+        .risk-badge.critical {
+            background: #FF0000;
+        }
+
+        .risk-badge.high {
+            background: #FF6600;
+        }
+
+        .risk-badge.moderate {
+            background: #FFA500;
+        }
+
+        .risk-badge.low {
+            background: #00AA00;
+        }
+
+        .location-coords {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+
+        .location-probability {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .legend-panel {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-panel h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #ff6b6b;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        /* Chatbot Widget */
+        .chatbot-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .chatbot-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 32px rgba(255, 107, 107, 0.6);
+        }
+
+        .chatbot-window {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 380px;
+            height: 500px;
+            background: linear-gradient(135deg, rgba(30, 33, 57, 0.98), rgba(15, 23, 41, 0.98));
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 1001;
+        }
+
+        .chatbot-window.open {
+            display: flex;
+        }
+
+        .chatbot-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .chatbot-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chatbot-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chatbot-messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #ff6b6b, #ff8e53);
+            border-radius: 10px;
+        }
+
+        .chat-message {
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .chat-message.user {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            align-self: flex-end;
+            color: white;
+        }
+
+        .chat-message.bot {
+            background: rgba(255, 255, 255, 0.05);
+            align-self: flex-start;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chatbot-input-area {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chatbot-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .chatbot-input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        .chatbot-send {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>Wildfire Detection System</h1>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="region-selector">
+                    <label>🌍 Location:</label>
+                    <select id="region-select" onchange="filterByRegion()">
+                        <option value="all">All Locations</option>
+                        <option value="australia">Australia (All Regions)</option>
+                        <option value="0">East Gippsland, Victoria</option>
+                        <option value="10">Alpine National Park, Victoria</option>
+                        <option value="73">Snowy River Region, Victoria</option>
+                        <option value="33">High Country, Victoria</option>
+                    </select>
+                </div>
+                <a href="/admin"
+                    style="background: linear-gradient(135deg, #ff6b6b, #ff8e53); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.3s ease;"
+                    onmouseover="this.style.transform='translateY(-2px)'"
+                    onmouseout="this.style.transform='translateY(0)'">
+                    👤 Admin Panel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="map-section">
+            <div class="map-header">
+                <h2>🗺️ Risk Distribution Map</h2>
+                <button class="refresh-btn" onclick="loadData()">🔥 Show Hotspots</button>
+            </div>
+            <div id="map"></div>
+        </div>
+
+        <div class="sidebar">
+            <!-- Statistics -->
+            <div class="stats-panel">
+                <h3>📊 Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Total Locations</h4>
+                        <div class="value" id="total-locations">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Active Alerts</h4>
+                        <div class="value" id="active-alerts">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Extreme Risk</h4>
+                        <div class="value" id="extreme-risk">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>High Risk</h4>
+                        <div class="value" id="high-risk">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Locations List -->
+            <div class="locations-panel">
+                <h3>Risk Locations</h3>
+                <div class="location-list" id="location-list">
+                    <div class="loading pulse">Loading locations...</div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend-panel">
+                <h3>🎨 Risk Levels</h3>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #8B0000;"></div>
+                    <span>EXTREME (80-100%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FF0000;"></div>
+                    <span>CRITICAL (60-80%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FF6600;"></div>
+                    <span>HIGH (40-60%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FFA500;"></div>
+                    <span>MODERATE (20-40%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00AA00;"></div>
+                    <span>LOW (0-20%)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Widget -->
+    <div class="chatbot-button" onclick="toggleChatbot()">💬</div>
+
+    <div class="chatbot-window" id="chatbot-window">
+        <div class="chatbot-header">
+            <h3>🔥 Wildfire Assistant</h3>
+            <button class="chatbot-close" onclick="toggleChatbot()">×</button>
+        </div>
+
+        <div class="chatbot-messages" id="chatbot-messages">
+            <div class="chat-message bot">
+                Hi! I'm your Wildfire Detection Assistant. Ask me about fire risks, safety tips, or current alerts!
+            </div>
+        </div>
+
+        <div class="chatbot-input-area">
+            <input type="text" class="chatbot-input" id="chatbot-input" placeholder="Type your message..."
+                onkeypress="if(event.key==='Enter') sendMessage()">
+            <button class="chatbot-send" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([-37.115, 149.790], 11);
+
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Risk configurations
+        const riskConfig = {
+            'EXTREME': { color: '#8B0000', radius: 400, priority: 1 },
+            'CRITICAL': { color: '#FF0000', radius: 320, priority: 2 },
+            'HIGH': { color: '#FF6600', radius: 240, priority: 3 },
+            'MODERATE': { color: '#FFA500', radius: 180, priority: 4 },
+            'LOW': { color: '#00AA00', radius: 120, priority: 5 }
+        };
+
+        let markers = [];
+        let allData = [];
+        let filteredData = [];
+        let heatmapLayer = null;
+        let showingHotspots = false;
+
+        // Load data
+        async function loadData() {
+            // Toggle hotspot visualization
+            if (showingHotspots) {
+                hideHotspots();
+            } else {
+                showHotspots();
+            }
+            try {
+                const response = await fetch('/api/assessments');
+                allData = await response.json();
+
+                if (allData.error) {
+                    throw new Error(allData.error);
+                }
+
+                // Apply current filter
+                filterByRegion();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                alert('Error loading data: ' + error.message);
+            }
+        }
+
+        function filterByRegion() {
+            const selectedRegion = document.getElementById('region-select').value;
+
+            if (selectedRegion === 'all' || selectedRegion === 'australia') {
+                // Show all data for "All Locations" or "Australia"
+                filteredData = allData;
+            } else {
+                // Filter by specific region
+                filteredData = allData.filter(item => {
+                    // Distribute locations across regions based on sample_id
+                    const itemRegion = parseInt(item.sample_id) % 4;
+                    const regionMap = { 0: '0', 1: '10', 2: '73', 3: '33' };
+                    return regionMap[itemRegion] === selectedRegion;
+                });
+            }
+
+            displayData();
+        }
+
+        function displayData() {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Update stats
+            document.getElementById('total-locations').textContent = filteredData.length;
+
+            const alerts = filteredData.filter(d =>
+                ['HIGH', 'CRITICAL', 'EXTREME'].includes(d.risk_level)
+            );
+            document.getElementById('active-alerts').textContent = alerts.length;
+
+            const extreme = filteredData.filter(d => d.risk_level === 'EXTREME');
+            document.getElementById('extreme-risk').textContent = extreme.length;
+
+            const high = filteredData.filter(d =>
+                ['HIGH', 'CRITICAL', 'EXTREME'].includes(d.risk_level)
+            );
+            document.getElementById('high-risk').textContent = high.length;
+
+            // Add markers
+            filteredData.forEach(location => {
+                const config = riskConfig[location.risk_level];
+
+                const circle = L.circle([location.latitude, location.longitude], {
+                    color: config.color,
+                    fillColor: config.color,
+                    fillOpacity: 0.4,
+                    radius: config.radius,
+                    weight: 2
+                }).addTo(map);
+
+                const popupContent = `
+                    <div style="font-family: Inter, sans-serif; min-width: 200px;">
+                        <h3 style="color: ${config.color}; margin: 0 0 10px 0; font-size: 16px;">
+                            ${location.risk_level} RISK
+                        </h3>
+                        <p style="margin: 5px 0; font-size: 13px;">
+                            <strong>Location ID:</strong> ${location.sample_id}
+                        </p>
+                        <p style="margin: 5px 0; font-size: 13px;">
+                            <strong>Coordinates:</strong><br>
+                            ${parseFloat(location.latitude).toFixed(4)}, ${parseFloat(location.longitude).toFixed(4)}
+                        </p>
+                        <p style="margin: 5px 0; font-size: 13px;">
+                            <strong>Fire Probability:</strong> ${(parseFloat(location.fire_probability) * 100).toFixed(1)}%
+                        </p>
+                        <p style="margin: 5px 0; font-size: 13px;">
+                            <strong>Response Time:</strong> ${location.response_time}
+                        </p>
+                    </div>
+                `;
+
+                circle.bindPopup(popupContent);
+                markers.push(circle);
+            });
+
+            // Update location list
+            displayLocationList();
+        }
+
+        function displayLocationList() {
+            const listContainer = document.getElementById('location-list');
+
+            if (filteredData.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <p>No locations in this region</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by priority
+            const sorted = [...filteredData].sort((a, b) =>
+                riskConfig[a.risk_level].priority - riskConfig[b.risk_level].priority
+            );
+
+            listContainer.innerHTML = sorted.map(location => `
+                <div class="location-item ${location.risk_level.toLowerCase()}" 
+                     onclick="focusLocation(${location.latitude}, ${location.longitude})">
+                    <div class="location-header">
+                        <span class="location-id">Location #${location.sample_id}</span>
+                        <span class="risk-badge ${location.risk_level.toLowerCase()}">${location.risk_level}</span>
+                    </div>
+                    <div class="location-coords">
+                        📍 ${parseFloat(location.latitude).toFixed(4)}, ${parseFloat(location.longitude).toFixed(4)}
+                    </div>
+                    <div class="location-probability">
+                        🔥 ${(parseFloat(location.fire_probability) * 100).toFixed(1)}% Risk
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function focusLocation(lat, lon) {
+            map.setView([lat, lon], 14);
+        }
+
+        function showHotspots() {
+            if (!allData || allData.length === 0) {
+                alert('Please wait for data to load first');
+                return;
+            }
+
+            // Create heatmap data - only high-risk locations
+            const heatData = allData
+                .filter(d => ['HIGH', 'CRITICAL', 'EXTREME'].includes(d.risk_level))
+                .map(d => {
+                    const intensity = d.risk_level === 'EXTREME' ? 1.0 :
+                        d.risk_level === 'CRITICAL' ? 0.7 : 0.4;
+                    return [
+                        parseFloat(d.latitude),
+                        parseFloat(d.longitude),
+                        intensity
+                    ];
+                });
+
+            // Remove existing heatmap if any
+            if (heatmapLayer) {
+                map.removeLayer(heatmapLayer);
+            }
+
+            // Add heatmap layer
+            heatmapLayer = L.heatLayer(heatData, {
+                radius: 35,
+                blur: 25,
+                maxZoom: 17,
+                max: 1.0,
+                gradient: {
+                    0.0: '#00AA00',
+                    0.3: '#FFA500',
+                    0.5: '#FF6600',
+                    0.7: '#FF0000',
+                    1.0: '#8B0000'
+                }
+            }).addTo(map);
+
+            showingHotspots = true;
+
+            // Update button text
+            const btn = document.querySelector('.refresh-btn');
+            btn.innerHTML = '❌ Hide Hotspots';
+            btn.style.background = 'linear-gradient(135deg, #8B0000, #FF0000)';
+        }
+
+        function hideHotspots() {
+            if (heatmapLayer) {
+                map.removeLayer(heatmapLayer);
+                heatmapLayer = null;
+            }
+
+            showingHotspots = false;
+
+            // Update button text
+            const btn = document.querySelector('.refresh-btn');
+            btn.innerHTML = '🔥 Show Hotspots';
+            btn.style.background = 'linear-gradient(135deg, #ff6b6b, #ff8e53)';
+        }
+
+        // Load data on page load
+        window.addEventListener('load', () => {
+            // Initial data load
+            fetch('/api/assessments')
+                .then(response => response.json())
+                .then(data => {
+                    allData = data;
+                    filterByRegion();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading data: ' + error.message);
+                });
+        });
+
+        // Chatbot Functions
+        function toggleChatbot() {
+            const chatbot = document.getElementById('chatbot-window');
+            chatbot.classList.toggle('open');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatbot-input');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message
+            addChatMessage(message, 'user');
+            input.value = '';
+
+            // Send to backend
+            try {
+                const response = await fetch('/api/chatbot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                addChatMessage(data.response, 'bot');
+
+            } catch (error) {
+                addChatMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            }
+        }
+
+        function addChatMessage(text, sender) {
+            const messagesDiv = document.getElementById('chatbot-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${sender}`;
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>

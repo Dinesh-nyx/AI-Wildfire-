@@ -1,0 +1,27 @@
+{
+  "model_type":"Random Forest",
+  "n_estimators":200,
+  "accuracy":1.0,
+  "total_samples":26936,
+  "train_samples":21548,
+  "test_samples":5388,
+  "top_regions":[
+    0,
+    10,
+    73,
+    33
+  ],
+  "features":[
+    "NBR",
+    "NDMI",
+    "NDVI",
+    "aspect",
+    "elevation",
+    "landcover",
+    "rain",
+    "slope",
+    "temperature",
+    "latitude",
+    "longitude"
+  ]
+}

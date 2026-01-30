@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildfire Detection System</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.min.js"></script>
+
+    <!-- Leaflet MarkerCluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8f9fa;
+            color: #2d3748;
+        }
+
+        /* Header */
+        .header {
+            background: #ffffff;
+            padding: 16px 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .select-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .select-wrapper label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #2d3748;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        select:hover {
+            border-color: #a0aec0;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .admin-btn {
+            padding: 8px 16px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .admin-btn:hover {
+            background: #3182ce;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 32px;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .btn {
+            padding: 6px 14px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #3182ce;
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .stat-box {
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .locations-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0 16px 16px 16px;
+        }
+
+        .location-item {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .location-item:hover {
+            background: #f7fafc;
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .location-id {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .risk-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .risk-badge.extreme {
+            background: #742a2a;
+            color: white;
+        }
+
+        .risk-badge.critical {
+            background: #c53030;
+            color: white;
+        }
+
+        .risk-badge.high {
+            background: #dd6b20;
+            color: white;
+        }
+
+        .risk-badge.moderate {
+            background: #d69e2e;
+            color: white;
+        }
+
+        .risk-badge.low {
+            background: #38a169;
+            color: white;
+        }
+
+        .location-prob {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .legend {
+            padding: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        .legend-label {
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        /* Chatbot */
+        .chatbot-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: #4299e1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+            transition: all 0.2s;
+            z-index: 999;
+        }
+
+        .chatbot-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(66, 153, 225, 0.5);
+        }
+
+        .chatbot-window {
+            position: fixed;
+            bottom: 90px;
+            right: 24px;
+            width: 360px;
+            height: 480px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .chatbot-window.open {
+            display: flex;
+        }
+
+        .chatbot-header {
+            padding: 16px;
+            background: #4299e1;
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .chatbot-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-message {
+            padding: 10px 14px;
+            border-radius: 8px;
+            max-width: 80%;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .chat-message.user {
+            background: #4299e1;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .chat-message.bot {
+            background: #f7fafc;
+            color: #2d3748;
+            align-self: flex-start;
+            border: 1px solid #e2e8f0;
+        }
+
+        .chatbot-input-area {
+            padding: 12px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .chatbot-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .chatbot-input:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+
+        .chatbot-send {
+            padding: 8px 16px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .chatbot-send:hover {
+            background: #3182ce;
+        }
+
+        /* Icon Buttons */
+        .icon-btn {
+            padding: 8px;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+
+        .icon-btn svg {
+            color: #4a5568;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 9999;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #4299e1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-overlay p {
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            background: #1a202c;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .header,
+        body.dark-mode .card {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+
+        body.dark-mode .card-header {
+            border-color: #4a5568;
+        }
+
+        body.dark-mode .stat-box {
+            background: #1a202c;
+            border-color: #4a5568;
+        }
+
+        body.dark-mode .stat-value {
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .location-item:hover {
+            background: #1a202c;
+        }
+
+        body.dark-mode select,
+        body.dark-mode .icon-btn {
+            background: #1a202c;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .chatbot-window {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+
+        body.dark-mode .chat-message.bot {
+            background: #1a202c;
+            border-color: #4a5568;
+        }
+
+        body.dark-mode .chatbot-input {
+            background: #1a202c;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .loading-overlay {
+            background: rgba(26, 32, 44, 0.95);
+        }
+
+        body.dark-mode .loading-overlay p {
+            color: #cbd5e0;
+        }
+
+        /* Tooltip */
+        [title] {
+            position: relative;
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 90px;
+            right: 90px;
+            width: 40px;
+            height: 40px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(66, 153, 225, 0.3);
+            transition: all 0.2s;
+            z-index: 998;
+        }
+
+        .back-to-top.show {
+            display: flex;
+        }
+
+        .back-to-top:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        /* Progress Indicator */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #4299e1, #667eea);
+            width: 0%;
+            z-index: 10000;
+            transition: width 0.1s ease;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            z-index: 9998;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast {
+            background: #ffffff;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid #4299e1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            border-left-color: #38a169;
+        }
+
+        .toast.error {
+            border-left-color: #e53e3e;
+        }
+
+        .toast.warning {
+            border-left-color: #d69e2e;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1a202c;
+            margin-bottom: 2px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #a0aec0;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        /* Scroll Reveal Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+
+        /* Chart Animations */
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .chart-card canvas {
+            animation: fadeInScale 0.6s ease;
+        }
+
+        /* Number Counter Animation */
+        .stat-value {
+            transition: all 0.3s ease;
+        }
+
+        /* Dark mode toast */
+        body.dark-mode .toast {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+
+        body.dark-mode .toast-title {
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .toast-message {
+            color: #a0aec0;
+        }
+
+        /* Leaflet Layer Control Styling */
+        .leaflet-control-layers {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+        }
+
+        .leaflet-control-layers-toggle {
+            background-image: none;
+            width: 36px;
+            height: 36px;
+        }
+
+        .leaflet-control-layers-list {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .leaflet-control-layers-base label {
+            font-size: 14px;
+            color: #2d3748;
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        body.dark-mode .leaflet-control-layers {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+
+        body.dark-mode .leaflet-control-layers-base label {
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .leaflet-control-layers-separator {
+            border-color: #4a5568;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progress-bar"></div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <h1>🔥 Wildfire Detection System</h1>
+            <div class="header-controls">
+                <div class="select-wrapper">
+                    <label>Location:</label>
+                    <select id="region-select" onchange="filterByRegion()" title="Filter locations by region">
+                        <option value="all">All Locations</option>
+                        <option value="australia">Australia (All Regions)</option>
+                        <option value="0">East Gippsland, Victoria</option>
+                        <option value="10">Alpine National Park, Victoria</option>
+                        <option value="73">Snowy River Region, Victoria</option>
+                        <option value="33">High Country, Victoria</option>
+                    </select>
+                </div>
+                <button class="icon-btn" onclick="exportData()" title="Export data to CSV">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </button>
+                <button class="icon-btn" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <svg id="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <a href="/admin" class="admin-btn" title="Access admin panel">Admin Panel</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <p>Loading data...</p>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Map Card -->
+            <div class="card reveal">
+                <div class="card-header">
+                    <h2>Risk Map</h2>
+                    <button class="btn" onclick="toggleHotspots()">Show Hotspots</button>
+                </div>
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Statistics -->
+            <div class="card reveal reveal-delay-1">
+                <div class="card-header">
+                    <h2>Statistics</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Total Locations</div>
+                        <div class="stat-value" id="total-locations">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Active Alerts</div>
+                        <div class="stat-value" id="active-alerts">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Extreme Risk</div>
+                        <div class="stat-value" id="extreme-risk">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">High Risk</div>
+                        <div class="stat-value" id="high-risk">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Locations List -->
+            <div class="card reveal reveal-delay-2">
+                <div class="card-header">
+                    <h2>Locations</h2>
+                </div>
+                <div class="locations-list" id="locations-list"></div>
+            </div>
+
+            <!-- Legend -->
+            <div class="card reveal reveal-delay-3">
+                <div class="card-header">
+                    <h2>Risk Levels</h2>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #742a2a;"></div>
+                        <span class="legend-label">EXTREME (80-100%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #c53030;"></div>
+                        <span class="legend-label">CRITICAL (60-80%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #dd6b20;"></div>
+                        <span class="legend-label">HIGH (40-60%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #d69e2e;"></div>
+                        <span class="legend-label">MODERATE (20-40%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #38a169;"></div>
+                        <span class="legend-label">LOW (0-20%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+    <!-- Chatbot -->
+    <div class="chatbot-button" onclick="toggleChatbot()">💬</div>
+    <div class="chatbot-window" id="chatbot-window">
+        <div class="chatbot-header">
+            <h3>Wildfire Assistant</h3>
+            <button class="chatbot-close" onclick="toggleChatbot()">×</button>
+        </div>
+        <div class="chatbot-messages" id="chatbot-messages">
+            <div class="chat-message bot">
+                Hi! I'm your Wildfire Detection Assistant. Ask me about fire risks, safety tips, or current alerts!
+            </div>
+        </div>
+        <div class="chatbot-input-area">
+            <input type="text" class="chatbot-input" id="chatbot-input" placeholder="Type your message..."
+                onkeypress="if(event.key==='Enter') sendMessage()">
+            <button class="chatbot-send" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize map with terrain view
+        const map = L.map('map').setView([-37.115, 149.790], 9);
+
+        // Define map layers
+        const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        });
+
+        const satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri, Maxar, Earthstar Geographics',
+            maxZoom: 19
+        });
+
+        const terrainMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenTopoMap contributors',
+            maxZoom: 17
+        });
+
+        // Add default layer (terrain)
+        terrainMap.addTo(map);
+
+        // Create layer control
+        const baseMaps = {
+            "🗺️ Terrain": terrainMap,
+            "🛰️ Satellite": satelliteMap,
+            "🏙️ Street Map": streetMap
+        };
+
+        L.control.layers(baseMaps, null, {
+            position: 'topright',
+            collapsed: false
+        }).addTo(map);
+
+        // Data variables
+        let allData = [];
+        let filteredData = [];
+        let markers = [];
+        let markerCluster = null;
+        let heatmapLayer = null;
+        let showingHotspots = false;
+
+        // Risk configuration
+        const riskConfig = {
+            'EXTREME': { color: '#742a2a', radius: 800 },
+            'CRITICAL': { color: '#c53030', radius: 600 },
+            'HIGH': { color: '#dd6b20', radius: 500 },
+            'MODERATE': { color: '#d69e2e', radius: 400 },
+            'LOW': { color: '#38a169', radius: 300 }
+        };
+
+        // Load data
+        async function loadData() {
+            try {
+                const response = await fetch('/api/assessments');
+                allData = await response.json();
+                filterByRegion();
+                showToast('Data loaded successfully', 'Data is up to date', 'success');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showToast('Error loading data', 'Please try again', 'error');
+            }
+        }
+
+        function filterByRegion() {
+            const selectedRegion = document.getElementById('region-select').value;
+
+            if (selectedRegion === 'all' || selectedRegion === 'australia') {
+                filteredData = allData;
+            } else {
+                filteredData = allData.filter(item => {
+                    const itemRegion = parseInt(item.sample_id) % 4;
+                    const regionMap = { 0: '0', 1: '10', 2: '73', 3: '33' };
+                    return regionMap[itemRegion] === selectedRegion;
+                });
+            }
+
+            displayData();
+        }
+
+        function displayData() {
+            // Clear existing markers and cluster
+            if (markerCluster) {
+                map.removeLayer(markerCluster);
+            }
+            markers = [];
+
+            // Update stats with animation
+            animateCounter('total-locations', filteredData.length);
+            const alerts = filteredData.filter(d => ['HIGH', 'CRITICAL', 'EXTREME'].includes(d.risk_level));
+            animateCounter('active-alerts', alerts.length);
+            animateCounter('extreme-risk', filteredData.filter(d => d.risk_level === 'EXTREME').length);
+            animateCounter('high-risk', alerts.length);
+
+            // Create marker cluster group
+            markerCluster = L.markerClusterGroup({
+                maxClusterRadius: 50,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true,
+                iconCreateFunction: function (cluster) {
+                    const childCount = cluster.getChildCount();
+                    let c = ' marker-cluster-';
+                    if (childCount < 10) {
+                        c += 'small';
+                    } else if (childCount < 50) {
+                        c += 'medium';
+                    } else {
+                        c += 'large';
+                    }
+                    return new L.DivIcon({
+                        html: '<div><span>' + childCount + '</span></div>',
+                        className: 'marker-cluster' + c,
+                        iconSize: new L.Point(40, 40)
+                    });
+                }
+            });
+
+            // Add markers to cluster
+            filteredData.forEach(location => {
+                const config = riskConfig[location.risk_level];
+                const circle = L.circle([location.latitude, location.longitude], {
+                    color: config.color,
+                    fillColor: config.color,
+                    fillOpacity: 0.4,
+                    radius: config.radius,
+                    weight: 2
+                });
+
+                circle.bindPopup(`
+                    <div style="font-family: Inter, sans-serif;">
+                        <h3 style="color: ${config.color}; margin: 0 0 8px 0; font-size: 14px;">
+                            ${location.risk_level} RISK
+                        </h3>
+                        <p style="margin: 4px 0; font-size: 12px;">
+                            <strong>Location:</strong> #${location.sample_id}
+                        </p>
+                        <p style="margin: 4px 0; font-size: 12px;">
+                            <strong>Probability:</strong> ${(parseFloat(location.fire_probability) * 100).toFixed(1)}%
+                        </p>
+                    </div>
+                `);
+
+                markerCluster.addLayer(circle);
+                markers.push(circle);
+            });
+
+            map.addLayer(markerCluster);
+
+            // Update locations list
+            displayLocationList();
+        }
+
+        function displayLocationList() {
+            const listDiv = document.getElementById('locations-list');
+            const sorted = [...filteredData].sort((a, b) => {
+                const order = { 'EXTREME': 0, 'CRITICAL': 1, 'HIGH': 2, 'MODERATE': 3, 'LOW': 4 };
+                return order[a.risk_level] - order[b.risk_level];
+            });
+
+            listDiv.innerHTML = sorted.map(loc => `
+                <div class="location-item" onclick="map.setView([${loc.latitude}, ${loc.longitude}], 13)">
+                    <div class="location-header">
+                        <span class="location-id">#${loc.sample_id}</span>
+                        <span class="risk-badge ${loc.risk_level.toLowerCase()}">${loc.risk_level}</span>
+                    </div>
+                    <div class="location-prob">${(parseFloat(loc.fire_probability) * 100).toFixed(1)}% probability</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleHotspots() {
+            if (showingHotspots) {
+                hideHotspots();
+            } else {
+                showHotspots();
+            }
+        }
+
+        function showHotspots() {
+            const heatData = allData
+                .filter(d => ['HIGH', 'CRITICAL', 'EXTREME'].includes(d.risk_level))
+                .map(d => {
+                    const intensity = d.risk_level === 'EXTREME' ? 1.0 :
+                        d.risk_level === 'CRITICAL' ? 0.7 : 0.4;
+                    return [parseFloat(d.latitude), parseFloat(d.longitude), intensity];
+                });
+
+            if (heatmapLayer) map.removeLayer(heatmapLayer);
+
+            heatmapLayer = L.heatLayer(heatData, {
+                radius: 35,
+                blur: 25,
+                maxZoom: 17,
+                max: 1.0,
+                gradient: { 0.0: '#38a169', 0.3: '#d69e2e', 0.5: '#dd6b20', 0.7: '#c53030', 1.0: '#742a2a' }
+            }).addTo(map);
+
+            showingHotspots = true;
+            document.querySelector('.btn').textContent = 'Hide Hotspots';
+            document.querySelector('.btn').classList.add('btn-secondary');
+            showToast('Hotspots enabled', 'Showing high-risk areas', 'success');
+        }
+
+        function hideHotspots() {
+            if (heatmapLayer) {
+                map.removeLayer(heatmapLayer);
+                heatmapLayer = null;
+            }
+            showingHotspots = false;
+            document.querySelector('.btn').textContent = 'Show Hotspots';
+            document.querySelector('.btn').classList.remove('btn-secondary');
+        }
+
+        // Chatbot functions
+        function toggleChatbot() {
+            document.getElementById('chatbot-window').classList.toggle('open');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatbot-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addChatMessage(message, 'user');
+            input.value = '';
+
+            try {
+                const response = await fetch('/api/chatbot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await response.json();
+                addChatMessage(data.response, 'bot');
+            } catch (error) {
+                addChatMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            }
+        }
+
+        function addChatMessage(text, sender) {
+            const messagesDiv = document.getElementById('chatbot-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${sender}`;
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Load data on page load
+        window.addEventListener('load', () => {
+            showLoading();
+            loadData().then(() => hideLoading());
+            initDarkMode();
+            initBackToTop();
+            initAutoRefresh();
+            initKeyboardShortcuts();
+            initProgressBar();
+            initScrollReveal();
+        });
+
+        // Loading functions
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('show');
+        }
+
+        // Dark mode
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            showToast('Theme changed', isDark ? 'Dark mode enabled' : 'Light mode enabled', 'success');
+        }
+
+        // Export data to CSV
+        function exportData() {
+            const csv = ['Location ID,Latitude,Longitude,Fire Probability,Risk Level'];
+            filteredData.forEach(loc => {
+                csv.push(`${loc.sample_id},${loc.latitude},${loc.longitude},${loc.fire_probability},${loc.risk_level}`);
+            });
+
+            const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wildfire-data-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Export successful', `${filteredData.length} locations exported`, 'success');
+        }
+
+        // Back to top
+        function initBackToTop() {
+            window.addEventListener('scroll', () => {
+                const btn = document.getElementById('back-to-top');
+                if (window.scrollY > 300) {
+                    btn.classList.add('show');
+                } else {
+                    btn.classList.remove('show');
+                }
+            });
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Auto-refresh data every 30 seconds
+        function initAutoRefresh() {
+            setInterval(() => {
+                loadData();
+            }, 30000);
+        }
+
+        // Keyboard shortcuts
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const chatbot = document.getElementById('chatbot-window');
+                    if (chatbot.classList.contains('open')) {
+                        toggleChatbot();
+                    }
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                    e.preventDefault();
+                    exportData();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                    e.preventDefault();
+                    toggleDarkMode();
+                }
+            });
+        }
+
+        // Progress Bar
+        function initProgressBar() {
+            window.addEventListener('scroll', () => {
+                const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const scrolled = (winScroll / height) * 100;
+                document.getElementById('progress-bar').style.width = scrolled + '%';
+            });
+        }
+
+        // Scroll Reveal
+        function initScrollReveal() {
+            const reveals = document.querySelectorAll('.reveal');
+
+            const revealOnScroll = () => {
+                reveals.forEach(element => {
+                    const elementTop = element.getBoundingClientRect().top;
+                    const elementVisible = 150;
+
+                    if (elementTop < window.innerHeight - elementVisible) {
+                        element.classList.add('active');
+                    }
+                });
+            };
+
+            window.addEventListener('scroll', revealOnScroll);
+            revealOnScroll(); // Initial check
+        }
+
+        // Toast Notifications
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type]}</span>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Animated Counter
+        function animateCounter(id, target) {
+            const element = document.getElementById(id);
+            const current = parseInt(element.textContent) || 0;
+            const increment = (target - current) / 20;
+            let count = current;
+
+            const timer = setInterval(() => {
+                count += increment;
+                if ((increment > 0 && count >= target) || (increment < 0 && count <= target)) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.round(count);
+                }
+            }, 30);
+        }
+    </script>
+</body>
+
+</html>

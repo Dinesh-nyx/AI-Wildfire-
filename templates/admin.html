@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Wildfire Detection System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 50px;
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #aaa;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+        }
+
+        .error-message {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Admin Dashboard */
+        .admin-dashboard {
+            display: none;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, #1e2139 0%, #0f1729 100%);
+            padding: 20px 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border-bottom: 2px solid #ff6b6b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .admin-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .admin-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .location-filter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .location-filter label {
+            font-size: 14px;
+            color: #aaa;
+            font-weight: 600;
+        }
+
+        .location-filter select {
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .location-filter select:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-user span {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            padding: 8px 20px;
+            border-radius: 8px;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 107, 107, 0.3);
+        }
+
+        .admin-content {
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.2);
+        }
+
+        .stat-box h3 {
+            font-size: 13px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-box .value {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-box .label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-container h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+        }
+
+        .locations-table {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 30px;
+        }
+
+        .locations-table h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(255, 107, 107, 0.1);
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ff6b6b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .risk-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .risk-badge.extreme {
+            background: #8B0000;
+        }
+
+        .risk-badge.critical {
+            background: #FF0000;
+        }
+
+        .risk-badge.high {
+            background: #FF6600;
+        }
+
+        .risk-badge.moderate {
+            background: #FFA500;
+        }
+
+        .risk-badge.low {
+            background: #00AA00;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* SMS Alert System */
+        .alert-system {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .alert-system h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #ff6b6b;
+        }
+
+        .alert-form {
+            margin-top: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-field label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #aaa;
+        }
+
+        .form-field select,
+        .form-field textarea {
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-field select:focus,
+        .form-field textarea:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+        }
+
+        .form-field textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .alert-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .preview-btn,
+        .send-alert-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .preview-btn {
+            background: rgba(74, 158, 255, 0.2);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            color: #4a9eff;
+        }
+
+        .preview-btn:hover {
+            background: rgba(74, 158, 255, 0.3);
+        }
+
+        .send-alert-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+        }
+
+        .send-alert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+        }
+
+        .alert-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .alert-status.success {
+            background: rgba(0, 170, 0, 0.2);
+            border: 1px solid rgba(0, 170, 0, 0.4);
+            color: #00AA00;
+        }
+
+        .alert-status.error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="login-screen">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🔥 Admin Panel</h1>
+                <p>Wildfire Detection System</p>
+            </div>
+
+            <div class="error-message" id="error-message"></div>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <a href="/" class="back-link">← Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div class="admin-dashboard" id="admin-dashboard">
+        <div class="admin-header">
+            <h1>🔥 Admin Panel - Wildfire Analytics</h1>
+            <div class="admin-controls">
+                <div class="location-filter">
+                    <label>🌍 Filter by Location:</label>
+                    <select id="location-filter" onchange="filterAnalytics()">
+                        <option value="all">All Locations</option>
+                        <option value="australia">Australia (All Regions)</option>
+                        <option value="0">East Gippsland, Victoria</option>
+                        <option value="10">Alpine National Park, Victoria</option>
+                        <option value="73">Snowy River Region, Victoria</option>
+                        <option value="33">High Country, Victoria</option>
+                    </select>
+                </div>
+                <div class="admin-user">
+                    <span>👤 <span id="admin-username"></span></span>
+                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-content">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+
+            <div class="stats-overview" id="stats-overview">
+                <div class="loading">Loading analytics...</div>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="chart-container">
+                    <h2>📊 Risk Level Distribution</h2>
+                    <canvas id="riskChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h2>🔥 Fire Probability by Location</h2>
+                    <canvas id="probabilityChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h2>🌡️ Environmental Risk Factors</h2>
+                    <canvas id="envChart"></canvas>
+                </div>
+            </div>
+
+            <!-- SMS Alert System -->
+            <div class="alert-system">
+                <h2>📱 SMS Alert System</h2>
+                <p style="color: #888; margin-bottom: 20px;">Send emergency alerts to residents in affected regions</p>
+
+                <div class="alert-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>🌍 Target Region</label>
+                            <select id="alert-region">
+                                <option value="all">All Regions (Broadcast)</option>
+                                <option value="0">East Gippsland, Victoria</option>
+                                <option value="10">Alpine National Park, Victoria</option>
+                                <option value="73">Snowy River Region, Victoria</option>
+                                <option value="33">High Country, Victoria</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field">
+                            <label>⚠️ Alert Level</label>
+                            <select id="alert-level" onchange="updateAlertTemplate()">
+                                <option value="extreme">EXTREME - Immediate Evacuation</option>
+                                <option value="critical">CRITICAL - Prepare to Evacuate</option>
+                                <option value="high">HIGH - Stay Alert</option>
+                                <option value="moderate">MODERATE - Monitor Conditions</option>
+                                <option value="custom">Custom Message</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>📝 Message</label>
+                        <textarea id="alert-message" rows="4"
+                            placeholder="Alert message will appear here..."></textarea>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                            <span id="char-count">0</span>/160 characters
+                        </div>
+                    </div>
+
+                    <div class="alert-actions">
+                        <button class="preview-btn" onclick="previewAlert()">👁️ Preview</button>
+                        <button class="send-alert-btn" onclick="sendAlert()">📤 Send Alert</button>
+                    </div>
+
+                    <div class="alert-status" id="alert-status" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="locations-table">
+                <h2>⚠️ Top 5 Highest Risk Locations</h2>
+                <table id="risk-table">
+                    <thead>
+                        <tr>
+                            <th>Location ID</th>
+                            <th>Coordinates</th>
+                            <th>Fire Probability</th>
+                            <th>Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody id="risk-table-body">
+                        <tr>
+                            <td colspan="4" class="loading">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if already logged in
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/api/admin/check');
+                const data = await response.json();
+
+                if (data.logged_in) {
+                    showDashboard(data.username);
+                }
+            } catch (error) {
+                console.error('Error checking login status:', error);
+            }
+        });
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-message');
+
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showDashboard(username);
+                } else {
+                    errorMsg.textContent = data.message || 'Invalid credentials';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Login failed. Please try again.';
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch('/api/admin/logout', { method: 'POST' });
+                location.reload();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        function showDashboard(username) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-dashboard').style.display = 'block';
+            document.getElementById('admin-username').textContent = username;
+            loadAnalytics();
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch('/api/admin/analytics');
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Unauthorized access');
+                    location.reload();
+                    return;
+                }
+
+                displayStats(data);
+                displayCharts(data);
+                displayRiskTable(data.highest_risk_locations);
+
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+
+        function displayStats(data) {
+            const statsHtml = `
+                <div class="stat-box">
+                    <h3>Total Locations</h3>
+                    <div class="value">${data.total_locations}</div>
+                    <div class="label">Monitored areas</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Extreme Risk</h3>
+                    <div class="value">${data.risk_distribution.EXTREME}</div>
+                    <div class="label">Critical areas</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Avg Temperature</h3>
+                    <div class="value">${data.average_temperature.toFixed(1)}°C</div>
+                    <div class="label">Range: ${data.environmental_summary.temp_range[0].toFixed(1)}°C - ${data.environmental_summary.temp_range[1].toFixed(1)}°C</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Avg Rainfall</h3>
+                    <div class="value">${data.average_rainfall.toFixed(1)}mm</div>
+                    <div class="label">Range: ${data.environmental_summary.rain_range[0].toFixed(1)} - ${data.environmental_summary.rain_range[1].toFixed(1)}mm</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Avg NDVI</h3>
+                    <div class="value">${data.average_ndvi.toFixed(3)}</div>
+                    <div class="label">Vegetation health index</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Elevation Range</h3>
+                    <div class="value">${data.environmental_summary.elevation_range[0]}-${data.environmental_summary.elevation_range[1]}m</div>
+                    <div class="label">Terrain variation</div>
+                </div>
+            `;
+
+            document.getElementById('stats-overview').innerHTML = statsHtml;
+        }
+
+        function displayCharts(data) {
+            // Use the same updateCharts function for consistency
+            updateCharts(data);
+        }
+
+        function displayRiskTable(locations) {
+            const tbody = document.getElementById('risk-table-body');
+            tbody.innerHTML = locations.map(loc => `
+                <tr>
+                    <td>#${loc.sample_id}</td>
+                    <td>${parseFloat(loc.latitude).toFixed(4)}, ${parseFloat(loc.longitude).toFixed(4)}</td>
+                    <td>${(parseFloat(loc.fire_probability) * 100).toFixed(1)}%</td>
+                    <td><span class="risk-badge ${loc.risk_level.toLowerCase()}">${loc.risk_level}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Global variables for filtering
+        let allAssessments = [];
+        let riskChart = null;
+        let probabilityChart = null;
+        let envChart = null;
+
+        async function filterAnalytics() {
+            const selectedLocation = document.getElementById('location-filter').value;
+
+            // Fetch all assessments if not loaded
+            if (allAssessments.length === 0) {
+                try {
+                    const response = await fetch('/api/assessments');
+                    allAssessments = await response.json();
+                } catch (error) {
+                    console.error('Error loading assessments:', error);
+                    return;
+                }
+            }
+
+            // Filter data based on selection
+            let filteredData = allAssessments;
+            if (selectedLocation !== 'all' && selectedLocation !== 'australia') {
+                filteredData = allAssessments.filter(item => {
+                    const itemRegion = parseInt(item.sample_id) % 4;
+                    const regionMap = { 0: '0', 1: '10', 2: '73', 3: '33' };
+                    return regionMap[itemRegion] === selectedLocation;
+                });
+            }
+
+            // Calculate filtered analytics
+            const analytics = calculateAnalytics(filteredData);
+
+            // Update displays
+            displayStats(analytics);
+            updateCharts(analytics);
+            displayRiskTable(analytics.highest_risk_locations);
+        }
+
+        function calculateAnalytics(data) {
+            if (data.length === 0) {
+                return {
+                    total_locations: 0,
+                    risk_distribution: { EXTREME: 0, CRITICAL: 0, HIGH: 0, MODERATE: 0, LOW: 0 },
+                    average_temperature: 0,
+                    average_rainfall: 0,
+                    average_ndvi: 0,
+                    highest_risk_locations: [],
+                    environmental_summary: {
+                        temp_range: [0, 0],
+                        rain_range: [0, 0],
+                        elevation_range: [0, 0]
+                    }
+                };
+            }
+
+            const riskDist = { EXTREME: 0, CRITICAL: 0, HIGH: 0, MODERATE: 0, LOW: 0 };
+            data.forEach(d => {
+                if (riskDist[d.risk_level] !== undefined) {
+                    riskDist[d.risk_level]++;
+                }
+            });
+
+            const temps = data.map(d => parseFloat(d.temperature));
+            const rains = data.map(d => parseFloat(d.rain));
+            const ndvis = data.map(d => parseFloat(d.NDVI));
+            const elevs = data.map(d => parseInt(d.elevation));
+
+            const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
+            const avgRain = rains.reduce((a, b) => a + b, 0) / rains.length;
+            const avgNdvi = ndvis.reduce((a, b) => a + b, 0) / ndvis.length;
+
+            const sortedByRisk = [...data].sort((a, b) =>
+                parseFloat(b.fire_probability) - parseFloat(a.fire_probability)
+            );
+
+            return {
+                total_locations: data.length,
+                risk_distribution: riskDist,
+                average_temperature: avgTemp,
+                average_rainfall: avgRain,
+                average_ndvi: avgNdvi,
+                highest_risk_locations: sortedByRisk.slice(0, 5),
+                environmental_summary: {
+                    temp_range: [Math.min(...temps), Math.max(...temps)],
+                    rain_range: [Math.min(...rains), Math.max(...rains)],
+                    elevation_range: [Math.min(...elevs), Math.max(...elevs)]
+                }
+            };
+        }
+
+        function updateCharts(data) {
+            // Destroy existing charts
+            if (riskChart) riskChart.destroy();
+            if (probabilityChart) probabilityChart.destroy();
+            if (envChart) envChart.destroy();
+
+            // 1. Risk Distribution Pie Chart
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            riskChart = new Chart(riskCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['EXTREME', 'CRITICAL', 'HIGH', 'MODERATE', 'LOW'],
+                    datasets: [{
+                        data: [
+                            data.risk_distribution.EXTREME,
+                            data.risk_distribution.CRITICAL,
+                            data.risk_distribution.HIGH,
+                            data.risk_distribution.MODERATE,
+                            data.risk_distribution.LOW
+                        ],
+                        backgroundColor: ['#8B0000', '#FF0000', '#FF6600', '#FFA500', '#00AA00'],
+                        borderWidth: 2,
+                        borderColor: '#1a1f3a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#fff',
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. Fire Probability Distribution (Top 10 locations)
+            const topLocations = data.highest_risk_locations.slice(0, 10);
+            const probCtx = document.getElementById('probabilityChart').getContext('2d');
+            probabilityChart = new Chart(probCtx, {
+                type: 'bar',
+                data: {
+                    labels: topLocations.map(loc => `#${loc.sample_id}`),
+                    datasets: [{
+                        label: 'Fire Probability (%)',
+                        data: topLocations.map(loc => (parseFloat(loc.fire_probability) * 100).toFixed(1)),
+                        backgroundColor: topLocations.map(loc => {
+                            const prob = parseFloat(loc.fire_probability);
+                            if (prob >= 0.8) return '#8B0000';
+                            if (prob >= 0.6) return '#FF0000';
+                            if (prob >= 0.4) return '#FF6600';
+                            if (prob >= 0.2) return '#FFA500';
+                            return '#00AA00';
+                        }),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: '#fff',
+                                callback: function (value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            title: {
+                                display: true,
+                                text: 'Probability (%)',
+                                color: '#fff'
+                            }
+                        },
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            title: {
+                                display: true,
+                                text: 'Location ID',
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 3. Environmental Risk Factors (Radar Chart)
+            const envCtx = document.getElementById('envChart').getContext('2d');
+
+            // Normalize values for radar chart (0-100 scale)
+            const tempNorm = ((data.average_temperature - data.environmental_summary.temp_range[0]) /
+                (data.environmental_summary.temp_range[1] - data.environmental_summary.temp_range[0])) * 100;
+            const rainNorm = 100 - ((data.average_rainfall - data.environmental_summary.rain_range[0]) /
+                (data.environmental_summary.rain_range[1] - data.environmental_summary.rain_range[0])) * 100; // Inverted: less rain = higher risk
+            const ndviNorm = 100 - (data.average_ndvi * 100); // Inverted: less vegetation = higher risk
+
+            envChart = new Chart(envCtx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Temperature Risk',
+                        'Drought Risk (Low Rain)',
+                        'Vegetation Stress',
+                        'Overall Fire Risk',
+                        'Alert Level'
+                    ],
+                    datasets: [{
+                        label: 'Risk Factors',
+                        data: [
+                            tempNorm,
+                            rainNorm,
+                            ndviNorm,
+                            ((data.risk_distribution.EXTREME + data.risk_distribution.CRITICAL) / data.total_locations) * 100,
+                            (data.risk_distribution.EXTREME / data.total_locations) * 100
+                        ],
+                        backgroundColor: 'rgba(255, 107, 107, 0.2)',
+                        borderColor: '#ff6b6b',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#ff6b6b',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#ff6b6b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: '#fff',
+                                backdropColor: 'transparent'
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            pointLabels: {
+                                color: '#fff',
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // SMS Alert System Functions
+        const alertTemplates = {
+            extreme: "🚨 EXTREME FIRE DANGER 🚨\nIMMEDIATE EVACUATION REQUIRED for {region}. Leave NOW. Follow emergency routes. Call 000 if trapped.",
+            critical: "⚠️ CRITICAL FIRE ALERT\nPrepare to evacuate {region} immediately. Pack essentials. Monitor emergency broadcasts. Stay ready to leave.",
+            high: "⚠️ HIGH FIRE RISK\nStay alert in {region}. Avoid outdoor activities. Keep emergency kit ready. Monitor conditions closely.",
+            moderate: "ℹ️ MODERATE FIRE RISK\nMonitor fire conditions in {region}. Be prepared. Follow safety guidelines. Stay informed via local news."
+        };
+
+        const regionNames = {
+            'all': 'ALL REGIONS',
+            '0': 'East Gippsland',
+            '10': 'Alpine National Park',
+            '73': 'Snowy River Region',
+            '33': 'High Country'
+        };
+
+        function updateAlertTemplate() {
+            const level = document.getElementById('alert-level').value;
+            const region = document.getElementById('alert-region').value;
+            const messageBox = document.getElementById('alert-message');
+
+            if (level === 'custom') {
+                messageBox.value = '';
+                messageBox.placeholder = 'Type your custom alert message here...';
+                messageBox.readOnly = false;
+            } else {
+                const template = alertTemplates[level];
+                const regionName = regionNames[region];
+                messageBox.value = template.replace('{region}', regionName);
+                messageBox.readOnly = false;
+            }
+
+            updateCharCount();
+        }
+
+        function updateCharCount() {
+            const message = document.getElementById('alert-message').value;
+            document.getElementById('char-count').textContent = message.length;
+        }
+
+        // Update character count on input
+        document.addEventListener('DOMContentLoaded', () => {
+            const messageBox = document.getElementById('alert-message');
+            if (messageBox) {
+                messageBox.addEventListener('input', updateCharCount);
+                updateAlertTemplate(); // Initialize with default template
+            }
+        });
+
+        function previewAlert() {
+            const region = document.getElementById('alert-region').value;
+            const level = document.getElementById('alert-level').value;
+            const message = document.getElementById('alert-message').value;
+
+            if (!message.trim()) {
+                alert('Please enter a message first');
+                return;
+            }
+
+            const regionName = regionNames[region];
+            const preview = `
+📱 SMS ALERT PREVIEW
+━━━━━━━━━━━━━━━━━━━━━━
+Target: ${regionName}
+Level: ${level.toUpperCase()}
+━━━━━━━━━━━━━━━━━━━━━━
+
+${message}
+
+━━━━━━━━━━━━━━━━━━━━━━
+This message will be sent to residents in the selected region.
+            `.trim();
+
+            alert(preview);
+        }
+
+        async function sendAlert() {
+            const region = document.getElementById('alert-region').value;
+            const level = document.getElementById('alert-level').value;
+            const message = document.getElementById('alert-message').value;
+            const statusDiv = document.getElementById('alert-status');
+
+            if (!message.trim()) {
+                showAlertStatus('Please enter a message before sending', 'error');
+                return;
+            }
+
+            // Confirmation
+            const regionName = regionNames[region];
+            const confirm = window.confirm(
+                `⚠️ CONFIRM ALERT SEND\n\n` +
+                `You are about to send an emergency alert to:\n` +
+                `Region: ${regionName}\n` +
+                `Level: ${level.toUpperCase()}\n\n` +
+                `Are you sure you want to proceed?`
+            );
+
+            if (!confirm) return;
+
+            // Show sending status
+            showAlertStatus('📤 Sending alert...', 'success');
+
+            try {
+                const response = await fetch('/api/admin/send-alert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        region: region,
+                        level: level,
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlertStatus(
+                        `✅ Alert sent successfully!\n` +
+                        `Recipients: ${data.recipients_count || 'N/A'}\n` +
+                        `Region: ${regionName}\n` +
+                        `Timestamp: ${new Date().toLocaleString()}`,
+                        'success'
+                    );
+                } else {
+                    showAlertStatus(`❌ Failed to send alert: ${data.message}`, 'error');
+                }
+
+            } catch (error) {
+                showAlertStatus(`❌ Error sending alert: ${error.message}`, 'error');
+            }
+        }
+
+        function showAlertStatus(message, type) {
+            const statusDiv = document.getElementById('alert-status');
+            statusDiv.textContent = message;
+            statusDiv.className = `alert-status ${type}`;
+            statusDiv.style.display = 'block';
+
+            // Auto-hide after 10 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 10000);
+            }
+        }
+    </script>
+</body>
+
+</html>
