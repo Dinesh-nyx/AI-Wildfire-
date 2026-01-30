@@ -407,7 +407,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For questions, feedback, or collaboration opportunities:
 
 - **Email**: dinesh.s6302@gmail.com
-- **GitHub**: [@yourusername](https://github.com/Dinesh-nyx)
+- **GitHub**: (https://github.com/Dinesh-nyx)
 
 
 ---
